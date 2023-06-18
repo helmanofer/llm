@@ -20,7 +20,7 @@ def txt():
 
 @fixture()
 def api_key():
-    return os.environ["OPENAI_API_KEY"]
+    return os.environ.get("OPENAI_API_KEY", "")
 
 
 def test_index(txt, api_key):
