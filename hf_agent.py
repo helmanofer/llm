@@ -1,5 +1,3 @@
-import json
-
 from transformers import OpenAiAgent
 
 agent = OpenAiAgent(model="text-davinci-003")

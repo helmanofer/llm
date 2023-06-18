@@ -28,7 +28,7 @@ class SLSE:
     def summarize(txt):
         import openai
         q = f"""{txt}
-        
+
         Tl;dr
         """
         openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -142,4 +142,3 @@ class SLSE:
 
         response = query_engine.query(q)
         return response
-
