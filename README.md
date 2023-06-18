@@ -2,7 +2,7 @@
 
 ## Try it online
 
-Go to the app hosted at [streamlit online](https://helmanofer-llm-fe-t9wo2b.streamlit.app/)
+Go to the app hosted at [streamlit online](https://helmanofer-simple-llm-search-engine-fe-o4w87z.streamlit.app/)
 
 
 ## Start local
