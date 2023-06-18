@@ -1,0 +1,7 @@
+data
+storage
+venv
+.idea
+__pycache__/
+.env
+sandbox
