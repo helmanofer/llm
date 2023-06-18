@@ -1,0 +1,11 @@
+llama_index
+openai
+streamlit
+# chromadb
+lancedb
+PyPDF2
+watchdog
+langchain
+docx2txt
+pypdf
+pytest
