@@ -8,6 +8,9 @@ from slse import SLSE
 
 slse = SLSE()
 
+if "OPENAI_API_KEY" not in st.session_state:
+    st.session_state["OPENAI_API_KEY"] = ""
+
 
 @st.cache_resource
 def get_cached_index(index_name_):
@@ -15,15 +18,22 @@ def get_cached_index(index_name_):
     return index_
 
 
-password = st.text_input("Enter your openai api key", type="password", value=os.environ.get("OPENAI_API_KEY", ""))
-if password:
-    os.environ['OPENAI_API_KEY'] = password
+st.text_input(
+    "Enter your openai api key",
+    type="password",
+    value=st.session_state.get("OPENAI_API_KEY", ""),
+    key="OPENAI_API_KEY",
+)
+if st.session_state.get("OPENAI_API_KEY", ""):
+    os.environ["OPENAI_API_KEY"] = st.session_state.get("OPENAI_API_KEY", "")
 
 tab2, tab1 = st.tabs(["Use existing data", "Load new data"])
 with tab1:
-    name = "_".join(st.text_input('Name this index').lower().split())
+    name = "_".join(st.text_input("Name this index").lower().split())
     uploaded_file = st.file_uploader("Choose a file")
-    sp = st.text_input('Split text to sentences by token or split by chunk of chars', value=1000)
+    sp = st.text_input(
+        "Split text to sentences by token or split by chunk of chars", value=1000
+    )
     ix = st.button("Index")
     txt = []
     if uploaded_file and sp and name and ix:
@@ -35,9 +45,9 @@ with tab1:
             st.table(txt[0:10])
 
     if txt:
-        with st.spinner('Wait for indexing'):
+        with st.spinner("Wait for indexing"):
             slse.get_index(name, txt)
-        st.success('Done!')
+        st.success("Done!")
 
 
 def clear():
@@ -47,19 +57,19 @@ def clear():
 with tab2:
     indexes = os.listdir(slse.storage_dir)
     index_name = st.selectbox(
-        'Choose an index to query',
-        indexes, key="index_name", on_change=clear)
+        "Choose an index to query", indexes, key="index_name", on_change=clear
+    )
 
-    st.text_input('Ask a question', key="q")
+    st.text_input("Ask a question", key="q")
 
     if st.session_state.q:
         index = get_cached_index(st.session_state.index_name)
-        with st.spinner('Wait for query result'):
+        with st.spinner("Wait for query result"):
             a = slse.query(st.session_state.q, index)
-        st.success('Done!')
+        st.success("Done!")
         st.markdown(a)
         data = []
         for node in a.source_nodes:
-            nn = {'text': node.node.text, 'score': node.score}
+            nn = {"text": node.node.text, "score": node.score}
             data.append(nn)
         st.table(data)
