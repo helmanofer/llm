@@ -1,6 +1,8 @@
 import os
 import tempfile
 from typing import List
+
+import openai
 import streamlit as st
 
 from slse import SLSE
@@ -25,6 +27,9 @@ st.text_input(
     key="OPENAI_API_KEY",
 )
 if st.session_state.get("OPENAI_API_KEY", ""):
+    key = st.session_state.get("OPENAI_API_KEY", "")
+    st.text(f"Open AI key was provided {key[0:5]}...")
+    openai.api_key = key
     os.environ["OPENAI_API_KEY"] = st.session_state.get("OPENAI_API_KEY", "")
 
 tab2, tab1 = st.tabs(["Use existing data", "Load new data"])
