@@ -4,7 +4,13 @@ import sys
 from pathlib import Path
 from typing import List
 
-from llama_index import GPTVectorStoreIndex, Document, StorageContext, load_index_from_storage, SimpleDirectoryReader
+from llama_index import (
+    GPTVectorStoreIndex,
+    Document,
+    StorageContext,
+    load_index_from_storage,
+    SimpleDirectoryReader,
+)
 from llama_index.indices.base import BaseGPTIndex
 from llama_index.indices.vector_store import VectorIndexRetriever
 from llama_index.node_parser import SimpleNodeParser
@@ -27,6 +33,7 @@ class SLSE:
     @staticmethod
     def summarize(txt):
         import openai
+
         q = f"""{txt}
 
         Tl;dr
@@ -40,10 +47,10 @@ class SLSE:
             top_p=1.0,
             frequency_penalty=0.0,
             presence_penalty=0.0,
-            stop=["###"]
+            stop=["###"],
         )
 
-        tldr_txt = response['choices'][0]['text']
+        tldr_txt = response["choices"][0]["text"]
         return tldr_txt
 
     @staticmethod
@@ -51,7 +58,7 @@ class SLSE:
         overlap_size = 100
         chunks = []
         for i in range(0, len(text), chunk_size - overlap_size):
-            chunks.append(text[i:i + chunk_size])
+            chunks.append(text[i : i + chunk_size])
         return chunks
 
     def split_text(self, path: str, chunk_by: str) -> List[str]:
@@ -71,19 +78,24 @@ class SLSE:
         return txt_l
 
     def get_index(self, index_name: str, txt: list[str] = None):
-        index_dir = f'{self.storage_dir}/{index_name}'
+        index_dir = f"{self.storage_dir}/{index_name}"
         from llama_index.vector_stores import LanceDBVectorStore
+
         vector_store = LanceDBVectorStore(uri=index_dir)
 
         if txt:
-            documents = [Document(t) for t in txt if len(t) > 100]
+            documents = [Document(text=t) for t in txt if len(t) > 100]
             storage_context = StorageContext.from_defaults(
                 vector_store=vector_store,
             )
-            index: GPTVectorStoreIndex = GPTVectorStoreIndex.from_documents(documents, storage_context=storage_context)
+            index: GPTVectorStoreIndex = GPTVectorStoreIndex.from_documents(
+                documents, storage_context=storage_context
+            )
             index.storage_context.persist(persist_dir=index_dir)
         else:
-            storage_context = StorageContext.from_defaults(persist_dir=index_dir, vector_store=vector_store)
+            storage_context = StorageContext.from_defaults(
+                persist_dir=index_dir, vector_store=vector_store
+            )
             index: BaseGPTIndex = load_index_from_storage(storage_context)
         return index
 
@@ -92,35 +104,42 @@ class SLSE:
         from langchain import OpenAI
         from llama_index import ServiceContext
 
-        index_dir = f'{self.storage_dir}/{index_name}'
+        index_dir = f"{self.storage_dir}/{index_name}"
         from llama_index.vector_stores import LanceDBVectorStore
+
         vector_store = LanceDBVectorStore(uri=index_dir)
-        llm_predictor = LLMPredictor(llm=OpenAI(temperature=0.3, model_name="davinci", best_of=3))
+        llm_predictor = LLMPredictor(
+            llm=OpenAI(temperature=0.3, model_name="davinci", best_of=3)
+        )
         service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor)
 
         if txt:
-            documents = [Document(t) for t in txt if len(t) > 100]
+            documents = [Document(text=t) for t in txt if len(t) > 100]
             storage_context = StorageContext.from_defaults(
                 vector_store=vector_store,
             )
-            index: GPTVectorStoreIndex = (GPTVectorStoreIndex
-                                          .from_documents(documents,
-                                                          storage_context=storage_context,
-                                                          service_context=service_context)
-                                          )
+            index: GPTVectorStoreIndex = GPTVectorStoreIndex.from_documents(
+                documents,
+                storage_context=storage_context,
+                service_context=service_context,
+            )
             index.storage_context.persist(persist_dir=index_dir)
         else:
-            storage_context = StorageContext.from_defaults(persist_dir=index_dir, vector_store=vector_store)
-            index: BaseGPTIndex = load_index_from_storage(storage_context, service_context=service_context)
+            storage_context = StorageContext.from_defaults(
+                persist_dir=index_dir, vector_store=vector_store
+            )
+            index: BaseGPTIndex = load_index_from_storage(
+                storage_context, service_context=service_context
+            )
             print(index.service_context.llm_predictor)
         return index
 
     def _get_index_simple(self, index_name, txt: list[str] = None):
-        index_dir = f'{self.storage_dir}/{index_name}'
-        index_file = f'{index_dir}/index_store.json'
+        index_dir = f"{self.storage_dir}/{index_name}"
+        index_file = f"{index_dir}/index_store.json"
 
         if not Path(index_file).is_file() and txt:
-            documents = [Document(t) for t in txt if len(t) > 100]
+            documents = [Document(text=t) for t in txt if len(t) > 100]
             parser = SimpleNodeParser()
             nodes = parser.get_nodes_from_documents(documents)
             index: GPTVectorStoreIndex = GPTVectorStoreIndex(nodes)
