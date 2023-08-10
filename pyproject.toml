@@ -1,0 +1,29 @@
+[project]
+name = ""
+version = ""
+description = ""
+authors = [
+    {name = "Ofer Helman", email = "ofer.helman@kaltura.com"},
+]
+dependencies = [
+    "llama-index==0.7.19",
+    "openai==0.27.8",
+    "streamlit==1.25.0",
+    "lancedb==0.1.16",
+    "PyPDF2",
+    "watchdog",
+    "langchain==0.0.252",
+    "docx2txt",
+    "pypdf==3.14.0",
+    "pytest==7.3.1",
+    "chromadb==0.4.5",
+    "duckduckgo-search",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

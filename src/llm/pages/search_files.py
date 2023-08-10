@@ -2,35 +2,24 @@ import os
 import tempfile
 from typing import List
 
-import openai
+# import openai
 import streamlit as st
 
-from slse import SLSE
+from common.models import QuestionAnswer
+from services.search_store_service import ChromaVectorStore
 
 
-slse = SLSE()
-
-if "OPENAI_API_KEY" not in st.session_state:
-    st.session_state["OPENAI_API_KEY"] = ""
+# if os.environ.get("OPENAI_API_KEY", ""):
+#     openai.openai_api_key = os.environ.get("OPENAI_API_KEY", "")
 
 
 @st.cache_resource
-def get_cached_index(index_name_):
-    index_ = slse.get_index(index_name_)
+def get_cached_search_service(name_=None):
+    if not name_:
+        name_ = st.session_state.index_name
+    index_ = ChromaVectorStore(name_)
     return index_
 
-
-st.text_input(
-    "Enter your openai api key",
-    type="password",
-    value=st.session_state.get("OPENAI_API_KEY", ""),
-    key="OPENAI_API_KEY",
-)
-if st.session_state.get("OPENAI_API_KEY", ""):
-    key = st.session_state.get("OPENAI_API_KEY", "")
-    st.text(f"Open AI key was provided {key[0:5]}...")
-    openai.api_key = key
-    os.environ["OPENAI_API_KEY"] = st.session_state.get("OPENAI_API_KEY", "")
 
 tab2, tab1 = st.tabs(["Use existing data", "Load new data"])
 with tab1:
@@ -41,17 +30,21 @@ with tab1:
     )
     ix = st.button("Index")
     txt = []
+
     if uploaded_file and sp and name and ix:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_file_name = os.path.join(tmpdir, uploaded_file.name)
             with open(tmp_file_name, "wb") as f:
                 f.write(uploaded_file.getbuffer())
-            txt: List[str] = slse.split_text(tmpdir, sp)
+            search_service = get_cached_search_service(name)
+            txt: List[str] = search_service.split_text(tmpdir, sp)
             st.table(txt[0:10])
 
     if txt:
         with st.spinner("Wait for indexing"):
-            slse.get_index(name, txt)
+            search_service = get_cached_search_service(name)
+
+            search_service.store_documents(txt)
         st.success("Done!")
 
 
@@ -60,21 +53,21 @@ def clear():
 
 
 with tab2:
-    indexes = os.listdir(slse.storage_dir)
+    indexes = ChromaVectorStore.list_indexes()
     index_name = st.selectbox(
         "Choose an index to query", indexes, key="index_name", on_change=clear
     )
 
     st.text_input("Ask a question", key="q")
 
-    if st.session_state.q:
-        index = get_cached_index(st.session_state.index_name)
+    if st.session_state.q and st.session_state.index_name:
+        search_service = get_cached_search_service()
         with st.spinner("Wait for query result"):
-            a = slse.query(st.session_state.q, index)
+            a: QuestionAnswer = search_service.query(st.session_state.q)
         st.success("Done!")
-        st.markdown(a)
+        st.markdown(a.answer)
         data = []
-        for node in a.source_nodes:
-            nn = {"text": node.node.text, "score": node.score}
+        for node in a.documents:
+            nn = {"text": node.text, "score": node.score}
             data.append(nn)
         st.table(data)
